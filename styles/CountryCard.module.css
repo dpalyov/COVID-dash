@@ -1,0 +1,124 @@
+.card {
+    position: relative;
+    background-color: #3a3838;
+    color: rgb(180, 178, 178);
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+}
+.ul {
+    padding: 50px 0;
+}
+
+.li {
+    perspective: 1000px;
+    font-size: 1.75rem;
+    font-weight: 500;
+    background-color: #3a3838;
+    border: 0;
+    /* transition: background-color ease-in 0.4s, transform ease-in 0.4s; */
+}
+
+/* .li:hover { */
+/* transform: scale(1.1, 1.1); */
+/* background-color: #f3b700; */
+/* color: black;
+    cursor: pointer;
+    z-index: 2;
+} */
+
+.liLabel {
+    font-weight: 700;
+    margin: 0;
+}
+
+.flip {
+    background-color: transparent;
+    width:100%;
+    height: 2.5em;
+    perspective: 1000px;
+}
+
+.flipInner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transition: transform 0.6s;
+    transform-style: preserve-3d;
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+}
+
+.flip:hover .flipInner {
+    transform: rotateY(180deg);
+    cursor: pointer;
+    /* background-color: #f3b700; */
+}
+
+/* .li:hover .flipFront {
+    opacity: 0;
+} */
+
+.flipFront,
+.flipBack {
+    display: flex;
+    justify-content: space-between;
+    text-align: center;
+    padding: 10px 20px;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+}
+
+.flipfront {
+    background-color: #3a3838;
+}
+
+.flipBack {
+    color: black;
+    background-color: #f3b700;
+    transform: rotateY(180deg);
+}
+
+.body {
+    position: absolute;
+    right: 12.5px;
+    top: 102px;
+    z-index: 1;
+}
+
+.title {
+    font-size: 3rem;
+    transform: translate(0, 47px);
+}
+
+.subtitle {
+    position: absolute;
+    left: 15px;
+    top: 135px;
+    font-size: 1.25rem;
+}
+
+.header {
+    position: relative;
+    height: 150px;
+    background-color: #5a5a5a;
+    text-align: center;
+}
+
+.img {
+    display: inline-block;
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    /* box-shadow: 0 4px 5px 0 rgba(255,255, 255, .8), 0 4px 5px 0 rgba(255,255, 255, .19); */
+    border: 0;
+    position: absolute;
+    right: 12.5px;
+    top: 115px;
+    z-index: 1;
+    object-fit: cover;
+}
+
+.hr {
+    color: grey;
+}

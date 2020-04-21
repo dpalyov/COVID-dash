@@ -1,0 +1,18 @@
+
+/* @media (max-width: 600px) {
+    #details {
+        position: relative;
+        width: 100%;
+    }
+} */
+
+
+.chartCountry {
+    text-align: center;
+    color: white;
+}
+
+.colMargin {
+    margin: 16px 0;
+}
+

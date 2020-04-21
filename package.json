@@ -8,8 +8,27 @@
     "start": "next start"
   },
   "dependencies": {
+    "@mapbox/mapbox-gl-geocoder": "^4.5.1",
+    "axios": "^0.19.2",
+    "bootstrap": "^4.4.1",
+    "d3": "^5.15.0",
+    "mapbox-gl": "^1.9.0",
     "next": "9.3.1",
+    "novelcovid": "^1.1.2",
     "react": "16.13.0",
-    "react-dom": "16.13.0"
+    "react-bootstrap": "^1.0.0",
+    "react-dom": "16.13.0",
+    "sass": "^1.26.3",
+    "swr": "^0.1.18"
+  },
+  "devDependencies": {
+    "@types/axios": "^0.14.0",
+    "@types/d3": "^5.7.2",
+    "@types/geojson": "^7946.0.7",
+    "@types/mapbox-gl": "^1.8.1",
+    "@types/next": "^9.0.0",
+    "@types/node": "^13.9.2",
+    "@types/react": "^16.9.25",
+    "typescript": "^3.8.3"
   }
 }

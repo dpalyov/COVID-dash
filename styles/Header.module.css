@@ -1,0 +1,16 @@
+.header {
+    background-color: rgba(0,0,0);
+    padding: 10px;
+    position: sticky;
+    left:0;
+    top: 0;
+    z-index:3;
+}
+
+.header a {
+    color: #f3b700;
+}
+
+.header a:hover {
+    opacity: 0.8;
+}
