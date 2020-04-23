@@ -4,9 +4,11 @@
 }
 
 .tooltip {
-    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-family: "Roboto", Helvetica, Arial, sans-serif;
     position: absolute;
     display: inline-block;
+    left: -10px;
+    top: -10px;
     width: auto;
     height: auto;
     background: none repeat scroll 0 0 white;

@@ -14,11 +14,9 @@
     "d3": "^5.15.0",
     "mapbox-gl": "^1.9.0",
     "next": "9.3.1",
-    "novelcovid": "^1.1.2",
     "react": "16.13.0",
     "react-bootstrap": "^1.0.0",
     "react-dom": "16.13.0",
-    "sass": "^1.26.3",
     "swr": "^0.1.18"
   },
   "devDependencies": {

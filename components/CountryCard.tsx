@@ -5,6 +5,7 @@ import styles from "../styles/CountryCard.module.css";
 interface CountryProps {
     className?: string;
     title: string;
+    gdp?: number;
     updated?: number;
     image: string;
     labelColor?: string;
@@ -16,6 +17,7 @@ function CountryCard({
     className,
     title,
     updated,
+    gdp,
     image,
     labelColor = "grey",
     data,

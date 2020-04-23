@@ -14,16 +14,8 @@
     font-weight: 500;
     background-color: #3a3838;
     border: 0;
-    /* transition: background-color ease-in 0.4s, transform ease-in 0.4s; */
 }
 
-/* .li:hover { */
-/* transform: scale(1.1, 1.1); */
-/* background-color: #f3b700; */
-/* color: black;
-    cursor: pointer;
-    z-index: 2;
-} */
 
 .liLabel {
     font-weight: 700;
@@ -49,12 +41,9 @@
 .flip:hover .flipInner {
     transform: rotateY(180deg);
     cursor: pointer;
-    /* background-color: #f3b700; */
 }
 
-/* .li:hover .flipFront {
-    opacity: 0;
-} */
+
 
 .flipFront,
 .flipBack {
@@ -107,16 +96,16 @@
 
 .img {
     display: inline-block;
-    width: 70px;
+    width: 120px;
     height: 70px;
-    border-radius: 50%;
-    /* box-shadow: 0 4px 5px 0 rgba(255,255, 255, .8), 0 4px 5px 0 rgba(255,255, 255, .19); */
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+    border-radius: 2px;
     border: 0;
     position: absolute;
     right: 12.5px;
     top: 115px;
     z-index: 1;
-    object-fit: cover;
+    object-fit: fill;
 }
 
 .hr {

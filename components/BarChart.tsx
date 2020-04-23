@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, ReactNode } from "react";
-import d3, {
+import  {
     select,
     scaleLinear,
     max,
@@ -14,10 +14,8 @@ import d3, {
     ScaleOrdinal,
     schemeYlOrRd,
     event,
-    line,
     axisBottom,
-    create,
-    Selection,
+    selectAll,
 } from "d3";
 import styles from "../styles/BarChart.module.css";
 
@@ -125,7 +123,7 @@ export default function BarChart<BarChartProps>({
              .selectAll("text")
             .data(d => d)
             .join("text")
-            .attr("x", d => verticalOrientation ? xScale(d[1]) + 2 :  yScale(d.data.label.toString()) + yScale.bandwidth() / 4 + 2)
+            .attr("x", d => verticalOrientation ? xScale(d[1]) + 2 :  yScale(d.data.label.toString()) + yScale.bandwidth() / 3)
             .attr("y", d => verticalOrientation ? yScale(d.data.label.toString()) + yScale.bandwidth() / 2 + 5 : xScale(d[1]) - 5)
             .attr("fill", textColor)
             .attr("font-size", "1rem")
@@ -218,18 +216,17 @@ export default function BarChart<BarChartProps>({
         .enter()
         .append("rect")
           .attr("x", 50)
-          .attr("y", function(d,i){ return 50 + i*(size+5)}) // 100 is where the first dot appears. 25 is the distance between dots
+          .attr("y", function(d,i){ return 50 + i*(size+5)})
           .attr("width", size)
           .attr("height", size)
           .style("fill", function(d){ return colorScale(d)})
       
-      // Add one dot in the legend for each name.
         svg.selectAll("mylabels")
         .data(labels)
         .enter()
         .append("text")
           .attr("x", 50 + size*1.2)
-          .attr("y", function(d,i){ return 50 + i*(size+5) + (size/2)}) // 100 is where the first dot appears. 25 is the distance between dots
+          .attr("y", function(d,i){ return 50 + i*(size+5) + (size/2)}) 
           .style("fill", function(d){ return colorScale(d)})
           .text(function(d){ return d})
           .attr("text-anchor", "left")
@@ -268,6 +265,11 @@ export default function BarChart<BarChartProps>({
             buildLegend(node, stackedData.map(d => d.key), colorScale)
             buildChart(node, width, height, chartTitle, linearScale, bandScale, colorScale, stackedData)
 
+        }
+
+        return () => {
+            select(node.current).selectAll("*").remove();
+            select("body").selectAll(styles.tooltip).remove();
         }
     }, [data]);
 

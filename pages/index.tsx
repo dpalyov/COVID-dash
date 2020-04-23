@@ -1,72 +1,110 @@
-import Head from "next/head";
 import { NextPage } from "next";
 import styles from "../styles/index.module.css";
 import { useEffect, useState } from "react";
 import LineChart, { TimeSeries } from "../components/LineChart";
-import BarChart, { BarChartProps, BarChartData } from "../components/BarChart";
+import BarChart, {  BarChartData } from "../components/BarChart";
 import dynamic from "next/dynamic";
 import { Col } from "react-bootstrap";
 import Layout from "../components/Layout";
-import { NovelCovid, Country, HistoricalCountry } from "novelcovid";
 import file from "../public/custom.geo.json";
 import CountryCard from "../components/CountryCard";
-import { schemeYlOrRd, schemeOrRd, schemeDark2, schemeGreys } from "d3";
-import Header from "../components/Header";
-import useSWR, { responseInterface } from 'swr'
+import { schemeYlOrRd, schemeDark2  } from "d3";
+import useSWR, { responseInterface } from "swr";
+import axios from "axios";
 
 const WorldMap = dynamic(() => import("../components/WorldMap"), {
     ssr: false,
 });
 
-const fetcher = (...args: any) => fetch(args).then(res => res.json());
-const baseUrl = "https://corona.lmao.ninja/"
+const baseUrl = "https://corona.lmao.ninja/";
+const allCountriesFetcher = (...args: any) =>
+    axios.get(args).then((res) => {
+        const countryData: any[] = res.data;
+        const tempData: any[] = [];
+        countryData.forEach((d: any) => {
+            file.features.forEach((f) => {
+                const { sovereignt, pop_est, gdp_md_est } = f.properties;
+
+                if (d.country === sovereignt) {
+                    let extendedProps = {
+                        ...d,
+                        sovereignt,
+                        pop_est,
+                        gdp_md_est,
+                    };
+                    tempData.push({ ...f, properties: extendedProps });
+                    return;
+                }
+            });
+        });
+        return tempData;
+    });
+
+const timeSeriesFetcher = (...args: any) =>
+    axios.get(args).then((res) => {
+        const hc: any= res.data;
+        const timelines = Object.keys(hc.timeline);
+
+        const data: TimeSeries[] = [];
+
+        //3 timelines - active, deaths, recovered
+        timelines.forEach((c) => {
+            const dates = Object.keys(hc.timeline[c]);
+            dates.forEach((date) => {
+                data.push({
+                    country: hc.country,
+                    category: c,
+                    date: Date.parse(date),
+                    value: hc.timeline[c][date],
+                });
+            });
+        });
+
+        const datesOfCases = Object.keys(hc.timeline.cases);
+        for(let i = 1; i < datesOfCases.length - 1; i++){
+            const today = parseInt(hc.timeline.cases[datesOfCases[i]]);
+            const yesterday = parseInt(hc.timeline.cases[datesOfCases[i - 1]]);
+            const lastDay =  parseInt(hc.timeline.cases[datesOfCases[datesOfCases.length - 1]]);
+
+            data.push({
+                country: hc.country,
+                category: "todayCases",
+                date: Date.parse(datesOfCases[i]),
+                value: parseFloat(roundingFn((today - yesterday) / lastDay, 2)),
+                supporting: today - yesterday
+            })
+        }
+        return data;
+    });
+
+const roundingFn = (x, n) => {
+    return (x * 100).toFixed(n);
+};
 
 export interface HomeProps {}
 
 const Home: NextPage<HomeProps> = () => {
-    const [geoData, setGeoData] = useState<any[] | undefined>([]);
-    const [top5, setTop5] = useState<any[] | undefined>([]);
-    const [bot5, setBot5] = useState<any[] | undefined>([]);
-    // const timeSeriesRes: responseInterface<any, any> = useSWR(`${baseUrl}v2/countries/Germany?yesterday=true`, fetcher);
-    const [timeSeries, setTimeSeries] = useState<TimeSeries[] | undefined>([]);
-    const [filteredOverview, setFilteredOverview] = useState<
-        Country | undefined
-    >(undefined);
-    const track = new NovelCovid();
+    // const [geoData, setGeoData] = useState<any[] | undefined>([]);
+    const [country, setCountry] = useState<string>(null);
+    const [top5Cases, setTop5Cases] = useState<any[] | undefined>([]);
+    const [top5CasesToday, setTop5CasesToday] = useState<any[] | undefined>([]);
+    const [filteredOverview, setFilteredOverview] = useState<any | undefined>(
+        undefined
+    );
 
-    const roundingFn = (x, n) => {
-        return (x * 100).toFixed(n);
-    }
+    const allCountries: responseInterface<any, any> = useSWR(
+        `${baseUrl}v2/countries`,
+        allCountriesFetcher
+    );
+    const timeSeriesRes: responseInterface<any, any> = useSWR(
+        () => (country ? `${baseUrl}v2/historical/${country}` : null),
+        timeSeriesFetcher
+    );
+
 
     useEffect(() => {
-        const data: any[] = [];
-        track.countries().then((d: Country) => {
-            const keys = Object.keys(d);
-            keys.forEach((k) => {
-                file.features.forEach((f) => {
-                    if (d[k].country === f.properties.sovereignt) {
-                        let extendedProps = Object.assign(
-                            {},
-                            {
-                                cases: d[k].cases,
-                                recovered: d[k].recovered,
-                                deaths: d[k].deaths,
-                                active: d[k].active,
-                                todayCases: d[k].todayCases,
-                                tests: d[k].tests,
-                                testsPerOneMillion: d[k].testsPerOneMillion,
-                                countryFlag: d[k].countryInfo.flag,
-                                sovereignt: f.properties.sovereignt,
-                                pop_est: f.properties.pop_est,
-                                gdp_md_est: f.properties.gdp_md_est,
-                            }
-                        );
-                        data.push({ ...f, properties: extendedProps });
-                        return;
-                    }
-                });
-            });
-            setGeoData(data);
+        if (allCountries.data) {
+            const data: any[] = allCountries.data;
 
             const labels = new Set(data.map((d) => d.properties.sovereignt));
 
@@ -84,7 +122,7 @@ const Home: NextPage<HomeProps> = () => {
                 }
             });
 
-            setTop5(
+            setTop5Cases(
                 barChartData
                     .map((d) => {
                         const { active, recovered, deaths } = d.props;
@@ -96,57 +134,43 @@ const Home: NextPage<HomeProps> = () => {
                     .slice(0, 5)
             );
 
-            setBot5(
+            setTop5CasesToday(
                 barChartData
                     .map((d) => {
-                        const { testsPerOneMillion } = d.props;
+                        const { todayCases, cases } = d.props;
                         return {
                             label: d.label,
                             props: {
-                                ["tests per million ppl"]: testsPerOneMillion,
+                                ["new cases %"]: roundingFn(
+                                    todayCases / cases,
+                                    2
+                                ),
                             },
                         };
                     })
                     .sort(
                         (a, b) =>
-                            b.props["tests per million ppl"] -
-                            a.props["tests per million ppl"]
+                            parseFloat(b.props["new cases %"]) -
+                            parseFloat(a.props["new cases %"])
                     )
                     .slice(0, 5)
             );
-        });
-    }, []);
+        }
+    }, [allCountries.data]);
 
     const handleCountrySelection = (selection: string) => {
         if (selection) {
-            track.historical(null, selection).then((hc: HistoricalCountry) => {
-                const timelines = Object.keys(hc.timeline);
+            setCountry(selection);
+            const filtered = allCountries.data.filter(
+                (d) => d.properties.sovereignt === selection
+            );
 
-                const data: TimeSeries[] = [];
-
-                timelines.forEach((c) => {
-                    const dates = Object.keys(hc.timeline[c]);
-                    dates.forEach((date) => {
-                        data.push({
-                            country: hc.country,
-                            category: c,
-                            date: Date.parse(date),
-                            value: hc.timeline[c][date],
-                        });
-                    });
-                });
-                setTimeSeries(data);
-            });
-
-            track
-                .countries(selection)
-                .then((d: Country) => setFilteredOverview(d));
+            setFilteredOverview(filtered[0]);
         }
     };
 
-
-    const casesData = timeSeries && [
-        ...timeSeries.filter((d) => d.category === "cases"),
+    const casesData = timeSeriesRes.data && [
+        ...timeSeriesRes.data.filter((d) => d.category === "cases"),
     ];
     const cases = (
         <LineChart
@@ -164,8 +188,8 @@ const Home: NextPage<HomeProps> = () => {
         />
     );
 
-    const deathsData = timeSeries && [
-        ...timeSeries.filter((d) => d.category === "deaths"),
+    const deathsData = timeSeriesRes.data && [
+        ...timeSeriesRes.data.filter((d) => d.category === "deaths"),
     ];
     const deaths = (
         <LineChart
@@ -183,8 +207,8 @@ const Home: NextPage<HomeProps> = () => {
         />
     );
 
-    const recData = timeSeries && [
-        ...timeSeries.filter((d) => d.category === "recovered"),
+    const recData = timeSeriesRes.data && [
+        ...timeSeriesRes.data.filter((d) => d.category === "recovered"),
     ];
     const recovered = (
         <LineChart
@@ -202,45 +226,48 @@ const Home: NextPage<HomeProps> = () => {
         />
     );
 
+    const todayCases = timeSeriesRes.data && [
+        ...timeSeriesRes.data.filter((d) => d.category === "todayCases"),
+    ];
+    const newCases = (
+        <LineChart
+            id="new-cases"
+            key="new-cases"
+            width={450}
+            height={350}
+            strokeColor="#F3B700"
+            dotColor="#cc9902"
+            strokeWidth={2}
+            scaleColor="#fff"
+            labelX="Timeline"
+            labelY="New cases %"
+            tooltipLabel="Abs:"
+            data={todayCases}
+        />
+    );
+
     return (
-        <div>
-            <Head>
-                <title>COVID-19 Dash</title>
-                <link rel="icon" href="/favicon.ico" />
-                <link
-                    href="https://api.mapbox.com/mapbox-gl-js/v1.9.0/mapbox-gl.css"
-                    rel="stylesheet"
-                />
-                <link
-                    rel="stylesheet"
-                    href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.4.2/mapbox-gl-geocoder.css"
-                    type="text/css"
-                />
-                <link
-                    href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,300;0,500;0,700;1,400&display=swap"
-                    rel="stylesheet"
-                />
-            </Head>
-            <Header />
+        <>
+            
             <main>
                 <Layout>
                     <Col md lg={8} className={[styles.colMargin].join(" ")}>
                         <WorldMap
                             height={100}
-                            geoData={geoData}
+                            geoData={allCountries.data}
                             selectedCountry={handleCountrySelection}
                         />
                         <BarChart
                             id="top5"
                             chartTitle="Top 5 by total cases"
-                            data={top5}
+                            data={top5Cases}
                             colorScheme={schemeYlOrRd}
                             verticalOrientation
                         />
                         <BarChart
                             id="bot5"
-                            chartTitle="Top 5 by testing per million people"
-                            data={bot5}
+                            chartTitle="Top 5 by daily growth of cases in %"
+                            data={top5CasesToday}
                             colorScheme={[schemeDark2]}
                             verticalOrientation={false}
                         />
@@ -248,45 +275,87 @@ const Home: NextPage<HomeProps> = () => {
                     <Col md lg={4} className={styles.colMargin}>
                         {filteredOverview && (
                             <CountryCard
-                                title={filteredOverview.country}
-                                updated={filteredOverview.updated}
+                                title={filteredOverview.properties.country}
+                                updated={filteredOverview.properties.updated}
+                                gdp={filteredOverview.properties.gdp_md_est}
                                 data={{
                                     cases: {
-                                        abs: filteredOverview.cases,
-                                        rel: 100
+                                        abs: filteredOverview.properties.cases,
+                                        rel: roundingFn(
+                                            filteredOverview.properties.cases /
+                                                filteredOverview.properties
+                                                    .pop_est,
+                                            2
+                                        ),
                                     },
                                     active: {
-                                        abs: filteredOverview.active,
-                                        rel: roundingFn(filteredOverview.active/filteredOverview.cases, 2)
+                                        abs: filteredOverview.properties.active,
+                                        rel: roundingFn(
+                                            filteredOverview.properties.active /
+                                                filteredOverview.properties
+                                                    .cases,
+                                            2
+                                        ),
                                     },
                                     deaths: {
-                                        abs: filteredOverview.deaths,
-                                        rel: roundingFn(filteredOverview.deaths/filteredOverview.cases, 2)
+                                        abs: filteredOverview.properties.deaths,
+                                        rel: roundingFn(
+                                            filteredOverview.properties.deaths /
+                                                filteredOverview.properties
+                                                    .cases,
+                                            2
+                                        ),
                                     },
                                     recovered: {
-                                        abs: filteredOverview.recovered,
-                                        rel: roundingFn(filteredOverview.recovered/filteredOverview.cases, 2)
+                                        abs:
+                                            filteredOverview.properties
+                                                .recovered,
+                                        rel: roundingFn(
+                                            filteredOverview.properties
+                                                .recovered /
+                                                filteredOverview.properties
+                                                    .cases,
+                                            2
+                                        ),
                                     },
                                     critical: {
-                                        abs: filteredOverview.critical,
-                                        rel: roundingFn(filteredOverview.critical/filteredOverview.cases, 2)
+                                        abs:
+                                            filteredOverview.properties
+                                                .critical,
+                                        rel: roundingFn(
+                                            filteredOverview.properties
+                                                .critical /
+                                                filteredOverview.properties
+                                                    .cases,
+                                            2
+                                        ),
                                     },
                                     ["cases today"]: {
-                                        abs: filteredOverview.todayCases,
-                                        rel: roundingFn(filteredOverview.todayCases/filteredOverview.cases, 2)
+                                        abs:
+                                            filteredOverview.properties
+                                                .todayCases,
+                                        rel: roundingFn(
+                                            filteredOverview.properties
+                                                .todayCases /
+                                                filteredOverview.properties
+                                                    .cases,
+                                            2
+                                        ),
                                     },
                                     // tested: filteredOverview.tests,
                                     // ["tests per million"]:
                                     //     filteredOverview.testsPerOneMillion,
                                 }}
-                                image={filteredOverview.countryInfo.flag}
-                                components={[cases, deaths, recovered]}
+                                image={
+                                    filteredOverview.properties.countryInfo.flag
+                                }
+                                components={[cases, deaths, recovered, newCases]}
                             />
                         )}
                     </Col>
                 </Layout>
             </main>
-        </div>
+            </>
     );
 };
 

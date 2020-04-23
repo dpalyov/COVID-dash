@@ -1,0 +1,47 @@
+.footer {
+    background-color: rgb(43, 37, 37);
+    font-size: 1.5rem;
+    color: gray;
+    overflow: hidden;
+    display: flex;
+    justify-content: flex-start;
+    position: relative;
+
+}
+
+.resources {
+    padding: 40px 80px;
+}
+
+
+.img {
+    background-image: url("../public/vector_bw.png");
+    background-repeat: no-repeat;
+    background-size: cover;
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top:0;
+    left:100;
+ 
+}
+
+.footer section h2 {
+    margin-bottom: .5em;
+}
+
+.footer section > div {
+    padding: 1em;
+}
+
+.item {
+    padding: .5em;
+}
+
+.footer a {
+    color: white;
+}
+
+.footer a:hover {
+    cursor: pointer;
+}
