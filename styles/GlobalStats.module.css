@@ -1,0 +1,37 @@
+
+.container > div {
+    display: inline-block;
+    margin: 0 7px 7px 0;
+    padding: 1rem;
+    color: #b4b2b2;
+    transition: transform .3s;
+    border-radius: 0;
+    box-shadow: 0 4px 8px 0 #00000033, 0 6px 20px 0 #00000030;
+}
+
+.container span {
+    font-size: 1.75rem;
+}
+
+.container > div:hover {
+    transform: scale(1.05,1.05);
+    cursor: pointer;
+}
+
+@media only screen and (max-width: 767px){
+    .badgeWrapper {
+        width: 100%;
+
+    }
+
+
+    .container > div {
+        width: 100%;
+        display: block;
+        text-align: center;
+    }
+
+    .container > div:hover {
+        transform: scale(1.025,1.025);
+    }
+}

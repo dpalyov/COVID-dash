@@ -6,6 +6,10 @@
     }
 } */
 
+.globalStatsRow{
+    display: flex;
+    justify-content: space-between;
+}
 
 .chartCountry {
     text-align: center;

@@ -2,19 +2,25 @@ import { NextPage } from "next";
 import styles from "../styles/index.module.css";
 import { useEffect, useState } from "react";
 import LineChart, { TimeSeries } from "../components/LineChart";
-import BarChart, {  BarChartData } from "../components/BarChart";
+import BarChart, { BarChartData } from "../components/BarChart";
 import dynamic from "next/dynamic";
-import { Col } from "react-bootstrap";
+import { Col, Row } from "react-bootstrap";
 import Layout from "../components/Layout";
 import file from "../public/custom.geo.json";
 import CountryCard from "../components/CountryCard";
-import { schemeYlOrRd, schemeDark2  } from "d3";
+import { schemeYlOrRd, schemeDark2 } from "d3";
 import useSWR, { responseInterface } from "swr";
 import axios from "axios";
+import GlobalStats from "../components/GlobalStats";
+import Header from "../components/Header";
 
 const WorldMap = dynamic(() => import("../components/WorldMap"), {
     ssr: false,
 });
+
+const roundingFn = (x, n) => {
+    return (x * 100).toFixed(n);
+};
 
 const baseUrl = "https://corona.lmao.ninja/";
 const allCountriesFetcher = (...args: any) =>
@@ -42,7 +48,7 @@ const allCountriesFetcher = (...args: any) =>
 
 const timeSeriesFetcher = (...args: any) =>
     axios.get(args).then((res) => {
-        const hc: any= res.data;
+        const hc: any = res.data;
         const timelines = Object.keys(hc.timeline);
 
         const data: TimeSeries[] = [];
@@ -61,30 +67,61 @@ const timeSeriesFetcher = (...args: any) =>
         });
 
         const datesOfCases = Object.keys(hc.timeline.cases);
-        for(let i = 1; i < datesOfCases.length - 1; i++){
+        for (let i = 1; i < datesOfCases.length - 1; i++) {
             const today = parseInt(hc.timeline.cases[datesOfCases[i]]);
             const yesterday = parseInt(hc.timeline.cases[datesOfCases[i - 1]]);
-            const lastDay =  parseInt(hc.timeline.cases[datesOfCases[datesOfCases.length - 1]]);
+            const lastDay = parseInt(
+                hc.timeline.cases[datesOfCases[datesOfCases.length - 1]]
+            );
 
             data.push({
                 country: hc.country,
                 category: "todayCases",
                 date: Date.parse(datesOfCases[i]),
                 value: parseFloat(roundingFn((today - yesterday) / lastDay, 2)),
-                supporting: today - yesterday
-            })
+                supporting: today - yesterday,
+            });
         }
         return data;
     });
 
-const roundingFn = (x, n) => {
-    return (x * 100).toFixed(n);
-};
+const globalStatsFetcher = (...args: any) =>
+    axios.get(args).then((res) => {
+        const closedCases = res.data.recovered + res.data.deaths;
+        return {
+            ["World Cases"]: res.data.cases,
+            ["World Active"]: `${res.data.active}(${roundingFn(
+                res.data.active / res.data.cases,
+                2
+            )}%)`,
+            ["World Closed"]: `${res.data.cases - res.data.active}(${roundingFn(
+                (res.data.cases - res.data.active) / res.data.cases,
+                2
+            )}%)`,
+            ["World Deaths"]: `${res.data.deaths}(${roundingFn(
+                res.data.deaths / closedCases,
+                2
+            )}%)`,
+            ["World Recovered"]: `${res.data.recovered}(${roundingFn(
+                res.data.recovered / closedCases,
+                2
+            )}%)`,
+            ["Today Cases"]: `${res.data.todayCases}(${roundingFn(
+                res.data.todayCases / res.data.cases,
+                2
+            )}%)`,
+            ["Today Deaths"]: `${res.data.todayDeaths}(${roundingFn(
+                res.data.todayDeaths / res.data.deaths,
+                2
+            )}%)`,
+            ["Affected countries"]: res.data.affectedCountries,
+            updated: res.data.updated,
+        };
+    });
 
 export interface HomeProps {}
 
 const Home: NextPage<HomeProps> = () => {
-    // const [geoData, setGeoData] = useState<any[] | undefined>([]);
     const [country, setCountry] = useState<string>(null);
     const [top5Cases, setTop5Cases] = useState<any[] | undefined>([]);
     const [top5CasesToday, setTop5CasesToday] = useState<any[] | undefined>([]);
@@ -100,7 +137,10 @@ const Home: NextPage<HomeProps> = () => {
         () => (country ? `${baseUrl}v2/historical/${country}` : null),
         timeSeriesFetcher
     );
-
+    const globalStats: responseInterface<any, any> = useSWR(
+        `${baseUrl}v2/all`,
+        globalStatsFetcher
+    );
 
     useEffect(() => {
         if (allCountries.data) {
@@ -235,7 +275,7 @@ const Home: NextPage<HomeProps> = () => {
             key="new-cases"
             width={450}
             height={350}
-            strokeColor="#F3B700"
+            strokeColor="#cc9902"
             dotColor="#cc9902"
             strokeWidth={2}
             scaleColor="#fff"
@@ -246,116 +286,154 @@ const Home: NextPage<HomeProps> = () => {
         />
     );
 
+    const { updated, ...gs } = globalStats.data
+        ? globalStats.data
+        : { updated: 0 };
+    const closedCases = filteredOverview && filteredOverview.deaths + filteredOverview.recovered;
+
     return (
         <>
-            
+            <Header lastUpdate={updated} />
             <main>
                 <Layout>
-                    <Col md lg={8} className={[styles.colMargin].join(" ")}>
-                        <WorldMap
-                            height={100}
-                            geoData={allCountries.data}
-                            selectedCountry={handleCountrySelection}
-                        />
-                        <BarChart
-                            id="top5"
-                            chartTitle="Top 5 by total cases"
-                            data={top5Cases}
-                            colorScheme={schemeYlOrRd}
-                            verticalOrientation
-                        />
-                        <BarChart
-                            id="bot5"
-                            chartTitle="Top 5 by daily growth of cases in %"
-                            data={top5CasesToday}
-                            colorScheme={[schemeDark2]}
-                            verticalOrientation={false}
-                        />
-                    </Col>
-                    <Col md lg={4} className={styles.colMargin}>
-                        {filteredOverview && (
-                            <CountryCard
-                                title={filteredOverview.properties.country}
-                                updated={filteredOverview.properties.updated}
-                                gdp={filteredOverview.properties.gdp_md_est}
-                                data={{
-                                    cases: {
-                                        abs: filteredOverview.properties.cases,
-                                        rel: roundingFn(
-                                            filteredOverview.properties.cases /
-                                                filteredOverview.properties
-                                                    .pop_est,
-                                            2
-                                        ),
-                                    },
-                                    active: {
-                                        abs: filteredOverview.properties.active,
-                                        rel: roundingFn(
-                                            filteredOverview.properties.active /
-                                                filteredOverview.properties
-                                                    .cases,
-                                            2
-                                        ),
-                                    },
-                                    deaths: {
-                                        abs: filteredOverview.properties.deaths,
-                                        rel: roundingFn(
-                                            filteredOverview.properties.deaths /
-                                                filteredOverview.properties
-                                                    .cases,
-                                            2
-                                        ),
-                                    },
-                                    recovered: {
-                                        abs:
-                                            filteredOverview.properties
-                                                .recovered,
-                                        rel: roundingFn(
-                                            filteredOverview.properties
-                                                .recovered /
-                                                filteredOverview.properties
-                                                    .cases,
-                                            2
-                                        ),
-                                    },
-                                    critical: {
-                                        abs:
-                                            filteredOverview.properties
-                                                .critical,
-                                        rel: roundingFn(
-                                            filteredOverview.properties
-                                                .critical /
-                                                filteredOverview.properties
-                                                    .cases,
-                                            2
-                                        ),
-                                    },
-                                    ["cases today"]: {
-                                        abs:
-                                            filteredOverview.properties
-                                                .todayCases,
-                                        rel: roundingFn(
-                                            filteredOverview.properties
-                                                .todayCases /
-                                                filteredOverview.properties
-                                                    .cases,
-                                            2
-                                        ),
-                                    },
-                                    // tested: filteredOverview.tests,
-                                    // ["tests per million"]:
-                                    //     filteredOverview.testsPerOneMillion,
-                                }}
-                                image={
-                                    filteredOverview.properties.countryInfo.flag
-                                }
-                                components={[cases, deaths, recovered, newCases]}
+                    <Row>
+                        <Col md={12}>
+                            <GlobalStats
+                                data={gs}
+                                colorScheme={[
+                                    "#cc9902",
+                                    "#cc9902",
+                                    "#cc9902",
+                                    "#CE0A0A",
+                                    "#2FBC46",
+                                    "#cc9902",
+                                    "#cc9902",
+                                    "#cc9902"
+                                ]}
                             />
-                        )}
-                    </Col>
+                        </Col>
+                    </Row>
+                    <Row>
+                        <Col md lg={8} className={[styles.colMargin].join(" ")}>
+                            <WorldMap
+                                height={100}
+                                geoData={allCountries.data}
+                                selectedCountry={handleCountrySelection}
+                            />
+                            <BarChart
+                                id="top5"
+                                chartTitle="Top 5 by total cases"
+                                data={top5Cases}
+                                colorScheme={schemeYlOrRd}
+                                verticalOrientation
+                            />
+                            <BarChart
+                                id="bot5"
+                                chartTitle="Top 5 by daily growth of cases in %"
+                                data={top5CasesToday}
+                                colorScheme={[schemeDark2]}
+                                verticalOrientation={false}
+                            />
+                        </Col>
+                        <Col md lg={4} className={styles.colMargin}>
+                            {filteredOverview && (
+                                <CountryCard
+                                    title={filteredOverview.properties.country}
+                                    population={
+                                        filteredOverview.properties.pop_est
+                                    }
+                                    gdp={filteredOverview.properties.gdp_md_est}
+                                    data={{
+                                        cases: {
+                                            abs:
+                                                filteredOverview.properties
+                                                    .cases,
+                                            rel: roundingFn(
+                                                filteredOverview.properties
+                                                    .cases /
+                                                    filteredOverview.properties
+                                                        .pop_est,
+                                                2
+                                            ),
+                                        },
+                                        active: {
+                                            abs:
+                                                filteredOverview.properties
+                                                    .active,
+                                            rel: roundingFn(
+                                                filteredOverview.properties
+                                                    .active /
+                                                    filteredOverview.properties
+                                                        .cases,
+                                                2
+                                            ),
+                                        },
+                                        deaths: {
+                                            abs:
+                                                filteredOverview.properties
+                                                    .deaths,
+                                            rel: roundingFn(
+                                                filteredOverview.properties
+                                                    .deaths / closedCases,
+                                                2
+                                            ),
+                                        },
+                                        recovered: {
+                                            abs:
+                                                filteredOverview.properties
+                                                    .recovered,
+                                            rel: roundingFn(
+                                                filteredOverview.properties
+                                                    .recovered / closedCases
+                                                    ,
+                                                2
+                                            ),
+                                        },
+                                        critical: {
+                                            abs:
+                                                filteredOverview.properties
+                                                    .critical,
+                                            rel: roundingFn(
+                                                filteredOverview.properties
+                                                    .critical /
+                                                    filteredOverview.properties
+                                                        .active,
+                                                2
+                                            ),
+                                        },
+                                        ["cases today"]: {
+                                            abs:
+                                                filteredOverview.properties
+                                                    .todayCases,
+                                            rel: roundingFn(
+                                                filteredOverview.properties
+                                                    .todayCases /
+                                                    filteredOverview.properties
+                                                        .cases,
+                                                2
+                                            ),
+                                        },
+                                        // tested: filteredOverview.tests,
+                                        // ["tests per million"]:
+                                        //     filteredOverview.testsPerOneMillion,
+                                    }}
+                                    image={
+                                        filteredOverview.properties.countryInfo
+                                            .flag
+                                    }
+                                    components={[
+                                        cases,
+                                        deaths,
+                                        recovered,
+                                        newCases,
+                                    ]}
+                                />
+                            )}
+                        </Col>
+                    </Row>
                 </Layout>
             </main>
-            </>
+        </>
     );
 };
 

@@ -6,7 +6,7 @@ interface CountryProps {
     className?: string;
     title: string;
     gdp?: number;
-    updated?: number;
+    population?: number;
     image: string;
     labelColor?: string;
     data: {};
@@ -16,7 +16,7 @@ interface CountryProps {
 function CountryCard({
     className,
     title,
-    updated,
+    population,
     gdp,
     image,
     labelColor = "grey",
@@ -68,11 +68,10 @@ function CountryCard({
                 <Card.Title className={styles.title}>{title}</Card.Title>
                 <Card.Subtitle
                     className={styles.subtitle}
-                >{`Updated on: ${new Date(
-                    updated
-                ).toDateString()}`}</Card.Subtitle>
+                >{`Population: ${population}`}
+                </Card.Subtitle>
             </Card.Header>
-            <Card.Img className={styles.img} variant="top" src={image} />
+            <Card.Img className={styles.img} variant="top" alt="flag" src={image} />
             <ListGroup className={styles.ul}>{renderList()}</ListGroup>
             {components.map((c, i) => c)}
         </Card>

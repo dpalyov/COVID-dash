@@ -29,9 +29,8 @@ function Layout<LayoutProps>({ children }) {
                 />
             </Head>
            
-            <Header />
             <Container id="layout-container">
-                <Row>{children}</Row>
+                {children}
             </Container>
             <Footer />
         </>
