@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, ReactNode } from "react";
+import React, { useRef, useEffect} from "react";
 import  {
     select,
     scaleLinear,
@@ -96,6 +96,7 @@ export default function BarChart<BarChartProps>({
         const container = select(node.current);
         const defaultScheme = ["grey", "steelblue"];
 
+        select("body").selectAll(styles.tooltip).remove();
         const toolTip = select("body").append("div").attr("class", styles.tooltip);
 
         const svg = container
@@ -143,7 +144,7 @@ export default function BarChart<BarChartProps>({
                 toolTip.style("display", "inline-block");
                 toolTip.html(`${d["key"]} - ${d[1] - d[0]}`);
             })
-            .on("mouseleave", d => {
+            .on("mouseout", d => {
                 toolTip.style("display", "none");
             });
 

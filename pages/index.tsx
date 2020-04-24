@@ -13,6 +13,7 @@ import useSWR, { responseInterface } from "swr";
 import axios from "axios";
 import GlobalStats from "../components/GlobalStats";
 import Header from "../components/Header";
+import { ColorScheme } from "../components/WorldMap";
 
 const WorldMap = dynamic(() => import("../components/WorldMap"), {
     ssr: false,
@@ -289,7 +290,36 @@ const Home: NextPage<HomeProps> = () => {
     const { updated, ...gs } = globalStats.data
         ? globalStats.data
         : { updated: 0 };
-    const closedCases = filteredOverview && filteredOverview.deaths + filteredOverview.recovered;
+    const closedCases =
+        filteredOverview &&
+        filteredOverview.properties.deaths +
+            filteredOverview.properties.recovered;
+    const mapColorScheme: ColorScheme[] = [
+        {
+            value: 100,
+            color: "#3FFF5F",
+        },
+        {
+            value: 1000,
+            color: "#76B041",
+        },
+        {
+            value: 5000,
+            color: "#F3B700",
+        },
+        {
+            value: 10000,
+            color: "#f38a00",
+        },
+        {
+            value: 100000,
+            color: "#FF3F3F",
+        },
+        {
+            value: 300000,
+            color: "#8C0909",
+        },
+    ];
 
     return (
         <>
@@ -308,7 +338,7 @@ const Home: NextPage<HomeProps> = () => {
                                     "#2FBC46",
                                     "#cc9902",
                                     "#cc9902",
-                                    "#cc9902"
+                                    "#cc9902",
                                 ]}
                             />
                         </Col>
@@ -319,6 +349,7 @@ const Home: NextPage<HomeProps> = () => {
                                 height={100}
                                 geoData={allCountries.data}
                                 selectedCountry={handleCountrySelection}
+                                colorScheme={mapColorScheme}
                             />
                             <BarChart
                                 id="top5"
@@ -384,8 +415,7 @@ const Home: NextPage<HomeProps> = () => {
                                                     .recovered,
                                             rel: roundingFn(
                                                 filteredOverview.properties
-                                                    .recovered / closedCases
-                                                    ,
+                                                    .recovered / closedCases,
                                                 2
                                             ),
                                         },

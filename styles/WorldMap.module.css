@@ -1,6 +1,29 @@
 .map {
+    position: relative;
     height: 80vh;
     box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+}
+
+.legend {
+    position: absolute;
+    bottom: 50px;
+    left: 5px;
+    background-color: white;
+    opacity: 1;
+    color: black;
+    z-index: 1;
+    display: flex;
+    justify-content: flex-start;
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+}
+
+.legendItem {
+    padding: 5px;
+}
+
+.legendItem label {
+    width: 20px;
+    margin: 0;
 }
 
 @media only screen and (max-width: 600px){

@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import mapbox, { MapboxOptions } from "mapbox-gl";
+import mapbox, { MapboxOptions, LngLatLike } from "mapbox-gl";
 import MapboxGeocoder from "@mapbox/mapbox-gl-geocoder";
 import styles from '../styles/WorldMap.module.css';
 
@@ -9,7 +9,16 @@ export interface WorldMapProps {
     marginLR?: number;
     marginTB?: number;
     geoData?: any[];
+    colorScheme: ColorScheme[];
+    center?: LngLatLike;
+    style?: string;
+    zoom?: number;
     selectedCountry: (country: string) => void;
+}
+
+export interface ColorScheme {
+    value: number;
+    color: string | number;
 }
 
 export interface GeoData {
@@ -23,6 +32,10 @@ export interface GeoData {
 function WorldMap({
     geoData = [],
     selectedCountry,
+    colorScheme,
+    center = [25.4858, 42.7339],
+    style = "mapbox://styles/mapbox/dark-v10",
+    zoom = 0
 }: WorldMapProps) {
 
     useEffect(() => {
@@ -32,9 +45,9 @@ function WorldMap({
         const opts: MapboxOptions = {
             doubleClickZoom: true,
             container: "map",
-            style: "mapbox://styles/mapbox/dark-v10",
-            center: [25.4858, 42.7339],
-            zoom: 0
+            style: style,
+            center: center,
+            zoom: zoom
         };
         var map = new mapbox.Map(opts);
 
@@ -67,18 +80,18 @@ function WorldMap({
                             "interpolate",
                             ["linear"],
                             ["get", "cases"],
-                            1,
-                            "#3FFF5F",
-                            100,
-                            "#76B041",
-                            1000,
-                            "#F3B700",
-                            10000,
-                            "#f38a00", 
-                            100000,
-                            "#FF3F3F",
-                            300000,
-                            "#8C0909",
+                            colorScheme[0].value,
+                            colorScheme[0].color,
+                            colorScheme[1].value,
+                            colorScheme[1].color,
+                            colorScheme[2].value,
+                            colorScheme[2].color,
+                            colorScheme[3].value,
+                            colorScheme[3].color,
+                            colorScheme[4].value,
+                            colorScheme[4].color,
+                            colorScheme[5].value,
+                            colorScheme[5].color
                         ],
                         
                     },
@@ -182,10 +195,6 @@ function WorldMap({
 
         map.on("click", "countries", (e) => {
             if (e.features.length > 0) {
-                // new Popup()
-                // .setLngLat(e.lngLat)
-                // .setHTML("<img src='"+e.features[0].properties.countryFlag+"'/>")
-                // .addTo(map);
                 selectedCountry(e.features[0].properties.sovereignt);
             }
         });
@@ -194,7 +203,13 @@ function WorldMap({
     }, [geoData]);
 
     return (
-            <div className={styles.map} id="map"></div>
+            <div className={styles.map} id="map">
+                <div className={styles.legend}>
+                    {colorScheme.map((c:ColorScheme,i:number) => {
+                       return <div key={i} className={styles.legendItem}><span><label style={{backgroundColor: `${c.color}`}}>&nbsp;</label> >={c.value}</span></div>
+                    })}
+                </div>
+            </div>
     );
 }
 
