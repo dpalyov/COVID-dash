@@ -89,7 +89,7 @@ const timeSeriesFetcher = (...args: any) =>
 const globalStatsFetcher = (...args: any) =>
     axios.get(args).then((res) => {
         const closedCases = res.data.recovered + res.data.deaths;
-        return {y
+        return {
             ["World Cases"]: res.data.cases,
             ["World Active"]: `${res.data.active}(${roundingFn(
                 res.data.active / res.data.cases,
