@@ -68,7 +68,7 @@ const timeSeriesFetcher = (...args: any) =>
         });
 
         const datesOfCases = Object.keys(hc.timeline.cases);
-        for (let i = 1; i < datesOfCases.length - 1; i++) {
+        for (let i = 1; i < datesOfCases.length; i++) {
             const today = parseInt(hc.timeline.cases[datesOfCases[i]]);
             const yesterday = parseInt(hc.timeline.cases[datesOfCases[i - 1]]);
             const lastDay = parseInt(
@@ -89,7 +89,7 @@ const timeSeriesFetcher = (...args: any) =>
 const globalStatsFetcher = (...args: any) =>
     axios.get(args).then((res) => {
         const closedCases = res.data.recovered + res.data.deaths;
-        return {
+        return {y
             ["World Cases"]: res.data.cases,
             ["World Active"]: `${res.data.active}(${roundingFn(
                 res.data.active / res.data.cases,
